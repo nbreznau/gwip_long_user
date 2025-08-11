@@ -8,6 +8,6 @@ This Online Repository accompanies the Data Descriptor paper of the same title. 
 
 ### Use Case 1. Mapping Global Work-Injury Policy
 
-### Use Case 2. Human Capital Extraction in Sub-Saharan Africa
+### Use Case 2. Interpolation and Merging for Global Socio-Economic Analyses
 
 ### Use Case 3. 
