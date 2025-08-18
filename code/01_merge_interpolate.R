@@ -7,7 +7,8 @@ library('readxl')
 # https://doi.org/10.7910/DVN/IVKYIE
 # Check for updates!
 
-df_gwip_long <- read_csv("data/gwip_long_v1.0.csv")
+df_gwip_long <- read_csv("data/gwip_long_v1.1.csv")
+df_gwip_cross <- read_csv("data/gwip_v3.1.csv")
 
 # Merge in GDP per capita from the Maddison data https://www.rug.nl/ggdc/historicaldevelopment/maddison/releases/maddison-project-database-2023
 # This will be useful for imputing values in between measurements of coverage
@@ -22,6 +23,27 @@ df_gdp <- df_gdp %>%
          cow_code = ifelse(countrycode == "PRI", 6,
                     ifelse(countrycode == "SRB", 345, cow_code))) %>%
   select(cow_code, year, gdppc, pop)
+
+## Interpolate some missing countries
+
+# make South Sudan the same as Sudan
+df_gdp_ssd <- subset(df_gdp, cow_code == 625) %>%
+  mutate(cow_code = 626)
+
+# make Somalia 70% of South Sudan (poorest country in the world)
+df_gdp_som <- df_gdp_ssd %>%
+  mutate(gdppc = gdppc*0.7,
+         cow_code = 520)
+
+# make Bhutan same as India
+df_gdp_bhu <- subset(df_gdp, cow_code == 750) %>%
+  mutate(cow_code = 760)
+
+# make North Macedonia the same as Serbia
+df_gdp_mkd <- subset(df_gdp, cow_code == 345) %>%
+  mutate(cow_code = 343)
+
+df_gdp <- bind_rows(df_gdp, df_gdp_som, df_gdp_ssd)
 
 # Expand to include all years since 1880
 
@@ -60,8 +82,8 @@ df_gwip_long_ext <- df_gwip_long_ext %>%
   # now fill in leading NAs in the time series (that occur before the first real value in the GWIP)
   mutate(
     labor_workinjury_coverage_pct_lf = ifelse(is.na(labor_workinjury_coverage_pct_lf), 0, labor_workinjury_coverage_pct_lf),
-    labor_workinjury_replacement_rate_perm = ifelse(is.na(labor_workinjury_replacement_rate_perm), 0, labor_workinjury_replacement_rate_perm),
-    labor_workinjury_replacement_rate_temp = ifelse(is.na(labor_workinjury_replacement_rate_temp), 0, labor_workinjury_replacement_rate_temp)
+    labor_workinjury_replacement_rate_perm = ifelse(is.na(labor_workinjury_replacement_rate_perm), -99, labor_workinjury_replacement_rate_perm),
+    labor_workinjury_replacement_rate_temp = ifelse(is.na(labor_workinjury_replacement_rate_temp), -99, labor_workinjury_replacement_rate_temp)
   )
 
 # Merge in Maddison data
@@ -106,5 +128,17 @@ df_gwip_long_ext_filtered <- df_gwip_long_ext_filtered %>%
                                                           0, labor_workinjury_coverage_pct_lf_i_pred),
          labor_workinjury_coverage_pct_lf_ii = ifelse(!is.na(labor_workinjury_coverage_pct_lf_i), labor_workinjury_coverage_pct_lf_i,
                                                       labor_workinjury_coverage_pct_lf_i_pred))
+
+# Add in countries as missings to make the map complete
+
+
+### Merge in GWIP v3.1 Cross-Sectional
+# Only comparing coverage rates ILO v my data collection
+df_gwip_cross <- df_gwip_cross %>%
+  select(cow_code, labor_workinjury_coverage_pct_lf_2020) %>%
+  mutate(year = 2020) # for merging
+
+df_gwip_long_ext_filtered <- df_gwip_long_ext_filtered %>%
+  left_join(df_gwip_cross, by = c("cow_code", "year"))
 
 write.csv(df_gwip_long_ext_filtered, "data/gwip_long_expanded.csv", row.names = F)
