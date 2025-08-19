@@ -208,4 +208,6 @@ img_crop <- image_crop(img, geometry = "2500x250+0+750")
 image_write(img_crop, path = "out/Fig2_leg_crop.png")
 
 
+
+
          

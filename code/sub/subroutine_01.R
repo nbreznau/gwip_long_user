@@ -37,4 +37,4 @@ df_map_data <- bind_rows(df_map_data, df_map_data_522,
                          df_map_data_115,
                          df_map_data_110)
 
-rm(sf_guy, sf_btn, sf_kos, sf_manual)
+rm(df_map_data_110, df_map_data_115, df_map_data_522, df_map_data_531, df_map_data_fill)
